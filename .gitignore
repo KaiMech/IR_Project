@@ -1,4 +1,3 @@
-data/
 *.jsonl.gz
 
 # (optional) Logs & temporary files
