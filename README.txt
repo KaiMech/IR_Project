@@ -1,2 +1,1 @@
-Mert ist ein Lutscher. 
-
+.
