@@ -1,4 +1,6 @@
 *.jsonl.gz
-
+embeddings/data/*
 # (optional) Logs & temporary files
 logs/
+.vscode
+/embeddings/*.ipynb

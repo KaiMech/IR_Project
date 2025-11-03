@@ -1,9 +1,10 @@
+from __future__ import annotations
 import os
 import json
 from pathlib import Path
 import torch
 import numpy as np
-from transformers import DPRContextEncoder, AutoTokenizer, BertTokenizerFast
+from transformers import DPRContextEncoder, AutoTokenizer, BertTokenizerFast, DPRQuestionEncoder
 from contextlib import nullcontext
 import math
 from tqdm.auto import tqdm
@@ -17,12 +18,12 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 
-OUTDIR = Path('context_embeddings_shard05')
+OUTDIR = Path('query_embeddings')
 OUTDIR.mkdir(exist_ok=True)
 
-CORPUS_JSONL = '/kaggle/input/ir-project-shard-01/corpus_sample_2000000-2499999.jsonl'
+CORPUS_JSONL = 'E:\\Uni\\Information Retrieval Project\\IR_Project\\data\\tot25\\train-2025-queries.jsonl'
 
-model = DPRContextEncoder.from_pretrained('facebook--dpr-ctx_encoder-single-nq-base')
+model = DPRQuestionEncoder.from_pretrained('facebook/dpr-question_encoder-single-nq-base')
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased', use_fast=True)
 
 if tokenizer.pad_token_id is None:
@@ -34,7 +35,7 @@ def iter_corpus():
             if not line.strip():
                 continue
             obj = json.loads(line)
-            yield str(obj['id']), obj.get('text', '')
+            yield str(obj['query_id']), obj.get('query', '')
 
 def _tokenize_for_encoder(texts, tokenizer, *, MAX_LEN=128, STRIDE=0, exclude_special_in_weight=True):
     pad_mode = "longest" if STRIDE == 0 else "max_length"
@@ -45,7 +46,7 @@ def _tokenize_for_encoder(texts, tokenizer, *, MAX_LEN=128, STRIDE=0, exclude_sp
         padding=pad_mode,
         max_length=MAX_LEN,
         stride=STRIDE,
-        return_overflowing_tokens=(STRIDE > 0),
+        return_overflowing_tokens=False,
         return_attention_mask=True,
         return_length=True,
         return_special_tokens_mask=exclude_special_in_weight,
@@ -72,8 +73,8 @@ def _tokenize_for_encoder(texts, tokenizer, *, MAX_LEN=128, STRIDE=0, exclude_sp
 @torch.inference_mode()
 def encode_doc_batch_fast(
     tokenized, doc_map_cpu, model,
-    *, CHUNK_BATCH=32, DEVICE=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-    pooling="auto", weight_by_tokens=True, ACCUM_ON_CPU=True, amp_dtype="bf16",
+    *, CHUNK_BATCH=64, DEVICE=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    pooling="auto", weight_by_tokens=True, ACCUM_ON_CPU=True, amp_dtype="fp16",
 ):
     input_ids = tokenized["input_ids"]; attention_mask = tokenized["attention_mask"]
     num_chunks = int(input_ids.size(0))
@@ -145,46 +146,76 @@ def encode_doc_batch_fast(
 
 
 def build_embeddings_fast(
-    *, iter_corpus, tokenizer, model, OUTDIR,
-    DOCS_PER_CALL=256, SHARD_SIZE_DOCS=50_000, MAX_LEN=128, STRIDE=0, CHUNK_BATCH=32, amp_dtype="bf16",
+    *,
+    iter_corpus,
+    tokenizer,
+    model,
+    OUTDIR: Path,
+    DOCS_PER_CALL=256,
+    SHARD_SIZE_DOCS=50_000,
+    MAX_LEN=128,
+    STRIDE=0,
+    CHUNK_BATCH=32,
+    amp_dtype="bf16",
     exclude_special_in_weight=True,
 ):
     OUTDIR.mkdir(parents=True, exist_ok=True)
 
-    def bucket_idx(text):
+    def bucket_idx(text: str):
         n = len(text)
-        if n < 300: return 0
-        elif n < 1200: return 1
-        else: return 2
+        if n < 300:
+            return 0
+        elif n < 1200:
+            return 1
+        else:
+            return 2
 
-    q = queue.Queue(maxsize=32)
+    q_batches = queue.Queue(maxsize=32)
 
     def producer():
         queues = {0: [], 1: [], 2: []}
         ids    = {0: [], 1: [], 2: []}
+
         for doc_id, text in iter_corpus():
             b = bucket_idx(text)
-            queues[b].append(text); ids[b].append(str(doc_id))
-            if len(queues[b]) >= DOCS_PER_CALL:
-                toks, doc_map = _tokenize_for_encoder(queues[b], tokenizer, MAX_LEN=MAX_LEN, STRIDE=STRIDE,
-                                                      exclude_special_in_weight=exclude_special_in_weight)
-                q.put((ids[b], toks, doc_map))
-                queues[b].clear(); ids[b].clear()
-        for b in (0,1,2):
-            if queues[b]:
-                toks, doc_map = _tokenize_for_encoder(queues[b], tokenizer, MAX_LEN=MAX_LEN, STRIDE=STRIDE,
-                                                      exclude_special_in_weight=exclude_special_in_weight)
-                q.put((ids[b], toks, doc_map))
-        q.put(None)
 
-    t = Thread(target=producer, daemon=True); t.start()
+            queues[b].append(text)
+            ids[b].append(str(doc_id))
+
+            if len(queues[b]) >= DOCS_PER_CALL:
+                toks, doc_map = _tokenize_for_encoder(
+                    queues[b],
+                    tokenizer,
+                    MAX_LEN=MAX_LEN,
+                    STRIDE=STRIDE,
+                    exclude_special_in_weight=exclude_special_in_weight,
+                )
+                q_batches.put((ids[b][:], toks, doc_map))
+                queues[b].clear()
+                ids[b].clear()
+
+        for b in (0, 1, 2):
+            if queues[b]:
+                toks, doc_map = _tokenize_for_encoder(
+                    queues[b],
+                    tokenizer,
+                    MAX_LEN=MAX_LEN,
+                    STRIDE=STRIDE,
+                    exclude_special_in_weight=exclude_special_in_weight,
+                )
+                q_batches.put((ids[b][:], toks, doc_map))
+        q_batches.put(None)
+
+    t = Thread(target=producer, daemon=True)
+    t.start()
 
     shard_idx = 0
-    buffer_blocks, buffer_ids = [], []
-    is_tty = sys.stderr.isatty()
+    buffer_blocks = []
+    buffer_ids    = [] 
+
     pbar = tqdm(
         desc="Encoding passages",
-        total=500000,
+        total=None,
         dynamic_ncols=True,
         mininterval=0.3,
         smoothing=0.0,
@@ -193,51 +224,86 @@ def build_embeddings_fast(
         disable=False,
     )
 
-    def maybe_flush():
+    def flush_to_disk():
         nonlocal shard_idx, buffer_blocks, buffer_ids
-        rows = sum(b.shape[0] for b in buffer_blocks if isinstance(b, np.ndarray) and b.ndim == 2)
-        if rows >= SHARD_SIZE_DOCS:
-            V = np.concatenate(buffer_blocks, axis=0).astype(np.float32)
-            np.save(OUTDIR / f"emb_{shard_idx:05d}.npy", V)
-            (OUTDIR / f"emb_{shard_idx:05d}.txt").write_text("\n".join(buffer_ids), encoding="utf-8")
-            shard_idx += 1
-            buffer_blocks.clear(); buffer_ids.clear()
+
+        if not buffer_blocks:
+            return 
+
+        V = np.concatenate(buffer_blocks, axis=0).astype(np.float32)
+
+        assert V.shape[0] == len(buffer_ids), (
+            f"INTERNAL ERROR before flush: {V.shape[0]} embeddings vs "
+            f"{len(buffer_ids)} ids"
+        )
+
+        np.save(OUTDIR / f"emb_{shard_idx:05d}.npy", V)
+
+        with open(OUTDIR / f"emb_{shard_idx:05d}.txt", "w", encoding="utf-8") as f:
+            for _id in buffer_ids:
+                f.write(_id + "\n")
+
+        shard_idx += 1
+        buffer_blocks = []
+        buffer_ids    = []
 
     while True:
-        item = q.get()
+        item = q_batches.get()
         if item is None:
             break
+
         ids_batch, toks, doc_map = item
+
         V = encode_doc_batch_fast(
-            tokenized=toks, doc_map_cpu=doc_map, model=model,
-            CHUNK_BATCH=CHUNK_BATCH, amp_dtype=amp_dtype
+            tokenized=toks,
+            doc_map_cpu=doc_map,
+            model=model,
+            CHUNK_BATCH=CHUNK_BATCH,
+            amp_dtype=amp_dtype,
         )
-        if not isinstance(V, np.ndarray): V = np.asarray(V, dtype=np.float32)
-        if V.ndim == 1: V = V[None, :]
+
+        if not isinstance(V, np.ndarray):
+            V = np.asarray(V, dtype=np.float32)
+        if V.ndim == 1:
+            V = V[None, :]
         if V.shape[0] == 0:
             continue
-        if len(ids_batch) != V.shape[0]:
-            ids_batch = ids_batch[:V.shape[0]]
-        buffer_blocks.append(V); buffer_ids.extend(ids_batch)
-        pbar.update(V.shape[0])
-        maybe_flush()
 
-    if buffer_blocks:
-        V = np.concatenate(buffer_blocks, axis=0).astype(np.float32)
-        np.save(OUTDIR / f"emb_{shard_idx:05d}.npy", V)
-        (OUTDIR / f"emb_{shard_idx:05d}.txt").write_text("\n".join(buffer_ids), encoding="utf-8")
+        if len(ids_batch) != V.shape[0]:
+            raise RuntimeError(
+                "Embedding/doc_id misalignment detected.\n"
+                f"- len(ids_batch)     = {len(ids_batch)}\n"
+                f"- V.shape[0]         = {V.shape[0]}\n"
+                f"- This means doc_map or batching produced a different number "
+                f"of document embeddings than document IDs. Aborting to avoid "
+                f"writing corrupted shards."
+            )
+
+        buffer_blocks.append(V.astype(np.float32, copy=False))
+        buffer_ids.extend(ids_batch)
+
+        pbar.update(V.shape[0])
+        
+        current_rows = sum(block.shape[0] for block in buffer_blocks)
+        if current_rows >= SHARD_SIZE_DOCS:
+            flush_to_disk()
+
+    flush_to_disk()
 
     pbar.close()
     t.join()
-    print("Done building embeddings (threaded producer).")
 
-build_embeddings_fast(
-    iter_corpus=iter_corpus,     
-    tokenizer=tokenizer,
-    model=model,
-    OUTDIR=OUTDIR,
-    DOCS_PER_CALL=64,
-    MAX_LEN=256,
-    STRIDE=0,
-    amp_dtype="bf16",
-)
+    print("Done building embeddings.")
+
+if __name__ == '__main__':
+    build_embeddings_fast(
+        iter_corpus=iter_corpus,
+        tokenizer=tokenizer,
+        model=model,
+        OUTDIR=OUTDIR,
+        DOCS_PER_CALL=16,
+        MAX_LEN=256,
+        STRIDE=0,
+        CHUNK_BATCH=16,
+        amp_dtype="fp16",
+    )
