@@ -256,7 +256,7 @@ def run_training(
         epochs=num_epochs,
         warmup_steps=warmup_steps,
         evaluator=evaluator,
-        evaluation_steps=int(len(train_dataloader) * 0.1),
+        evaluation_steps=len(train_dataloader),
         output_path=output_path,
         save_best_model=True,
         use_amp=True,
