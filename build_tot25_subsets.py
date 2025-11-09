@@ -23,7 +23,7 @@ Companion files:
   - train_ids.txt / eval_ids.txt
   - train_queries_80.jsonl / eval_queries_20.jsonl (just the selected QID lists)
   - stats.json
-  - missing_gold.log (QIDs whose gold doc is not present in the main corpus (in our case the script runs perfect and we don't have any missing gold docs)) 
+  - missing_gold.log (QIDs whose gold doc is not present in the main corpus (in our case we didn't have any missing gold docs --> good)) 
 
 80/20 split:
   For each split (train, dev1, dev2, dev3), query IDs are split 80%/20% (seed-controlled).
@@ -107,9 +107,6 @@ RUNFILES = {
 CORPUS_FILE  = "trec-tot-2025-corpus.jsonl.gz"
 OFFSETS_FILE = "trec-tot-2025-offsets.jsonl.gz"
 
-# --------------------------
-# Utils
-# --------------------------
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)

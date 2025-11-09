@@ -13,6 +13,7 @@ run_retrieval_dev3.txt
 run_anserini_train.txt
 run_pyterrier_train.txt
 run_retrieval_train.txt
-data/tot25/subsets/*.jsonl.gz
+data/tot25/subsets/eval20/*.jsonl.gz
+data/tot25/subsets/train80/*.jsonl.gz
 # (optional) Logs & temporary files
 logs/

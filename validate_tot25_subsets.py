@@ -9,14 +9,18 @@ It performs the following checks:
 1) Coverage & correctness of qrels per split:
    - For each split (train, dev1, dev2, dev3), it reads the ORIGINAL qrels (e.g., dev1-2025-qrel.txt),
      then reads your split qrels:
-       * subsets/train80-qrels-{split}.txt
-       * subsets/eval20-qrels-{split}.txt
+       * subsets/train80/train80-qrels-{split}.txt
+       * subsets/eval20/eval20-qrels-{split}.txt
    - It verifies:
        a) The union of 80%-qids and 20%-qids equals the original qids, except for qids listed in
           subsets/missing_gold.log (whose gold doc is absent from the main corpus). Any further gaps are errors.
        b) For every qid in each split qrels file, the docid matches the one in the original qrels.
        c) For every qid in train80 split qrels, the docid is included in train_ids.txt and also present inside
           train100k-corpus.jsonl.gz. Likewise eval20 split qrels -> eval_ids.txt and eval250k-corpus.jsonl.gz.
+       d) The set of QIDs in the queries files matches the set of QIDs in the corresponding qrels files
+          (per split), i.e.:
+            - subsets/train80/train80-queries-{split}.jsonl  <->  subsets/train80/train80-qrels-{split}.txt
+            - subsets/eval20/eval20-queries-{split}.jsonl    <->  subsets/eval20/eval20-qrels-{split}.txt
 
 2) Subset corpus integrity:
    - Ensures that train100k-corpus.jsonl.gz has EXACTLY 100,000 lines and eval250k-corpus.jsonl.gz EXACTLY 250,000 lines.
@@ -52,13 +56,19 @@ QRELS = {
 }
 SPLITS = ["train", "dev1", "dev2", "dev3"]
 
-TRAIN_IDS_FILE = "train_ids.txt"
-EVAL_IDS_FILE  = "eval_ids.txt"
-TRAIN_GZ       = "train100k-corpus.jsonl.gz"
-EVAL_GZ        = "eval250k-corpus.jsonl.gz"
+TRAIN80_DIR = "train80"
+EVAL20_DIR  = "eval20"
 
-TRAIN_QRELS_SPLIT_PATTERN = "train80-qrels-{}.txt" 
-EVAL_QRELS_SPLIT_PATTERN  = "eval20-qrels-{}.txt"
+TRAIN_IDS_FILE = f"{TRAIN80_DIR}/train_ids.txt"
+EVAL_IDS_FILE  = f"{EVAL20_DIR}/eval_ids.txt"
+TRAIN_GZ       = f"{TRAIN80_DIR}/train100k-corpus.jsonl.gz"
+EVAL_GZ        = f"{EVAL20_DIR}/eval250k-corpus.jsonl.gz"
+
+
+TRAIN_QRELS_SPLIT_PATTERN   = "train80-qrels-{}.txt"
+EVAL_QRELS_SPLIT_PATTERN    = "eval20-qrels-{}.txt"
+TRAIN_QUERIES_SPLIT_PATTERN = "train80-queries-{}.jsonl"
+EVAL_QUERIES_SPLIT_PATTERN  = "eval20-queries-{}.jsonl"
 
 MISSING_LOG = "missing_gold.log"
 
@@ -71,7 +81,6 @@ def eprint(*args, **kwargs):
 
 
 def read_qrels(path: Path):
-
     mp = {}
     with open(path, "rt", encoding="utf-8") as f:
         for line in f:
@@ -88,7 +97,6 @@ def read_qrels(path: Path):
 
 
 def read_ids(path: Path):
-
     s = set()
     with open(path, "rt", encoding="utf-8") as f:
         for line in f:
@@ -99,7 +107,6 @@ def read_ids(path: Path):
 
 
 def read_missing_log(path: Path):
-
     res = defaultdict(set)
     if not path.exists():
         return res
@@ -117,12 +124,11 @@ def read_missing_log(path: Path):
 
 
 def parse_gz_corpus_ids_and_hashes(gz_path: Path, wanted_ids: set):
-
     hashes = {}
     seen_cnt = 0
     with gzip.open(gz_path, "rt", encoding="utf-8") as f:
         for line in f:
-            raw = line  
+            raw = line
             try:
                 obj = json.loads(raw)
             except Exception:
@@ -138,7 +144,6 @@ def parse_gz_corpus_ids_and_hashes(gz_path: Path, wanted_ids: set):
 
 
 def count_gz_lines_and_collect_ids(gz_path: Path):
-
     cnt = 0
     ids = set()
     ids_in_order = []
@@ -162,7 +167,6 @@ def count_gz_lines_and_collect_ids(gz_path: Path):
 
 
 def validate_qrels_coverage(data_root: Path, subsets_dir: Path):
-
     ok = True
     msgs = []
 
@@ -182,8 +186,8 @@ def validate_qrels_coverage(data_root: Path, subsets_dir: Path):
         orig = read_qrels(orig_path)
         qrels_orig[split] = orig
 
-        train_split_path = subsets_dir / (TRAIN_QRELS_SPLIT_PATTERN.format(split))
-        eval_split_path  = subsets_dir / (EVAL_QRELS_SPLIT_PATTERN.format(split))
+        train_split_path = subsets_dir / TRAIN80_DIR / (TRAIN_QRELS_SPLIT_PATTERN.format(split))
+        eval_split_path  = subsets_dir / EVAL20_DIR  / (EVAL_QRELS_SPLIT_PATTERN.format(split))
 
         if not train_split_path.exists():
             ok = False
@@ -251,10 +255,9 @@ def validate_subset_membership_against_qrels(
     train_ids_in_gz: set,
     eval_ids_in_gz: set
 ):
-
     ok = True
     msgs = []
-    # Train
+
     for split in SPLITS:
         missing_ids = [did for did in qrels_train_by_split.get(split, {}).values() if did not in train_ids]
         missing_in_gz = [did for did in qrels_train_by_split.get(split, {}).values() if did not in train_ids_in_gz]
@@ -290,6 +293,76 @@ def validate_subset_membership_against_qrels(
     return ok, msgs
 
 
+def read_queries_qids(path: Path):
+    qids = set()
+    with open(path, "rt", encoding="utf-8") as f:
+        for line in f:
+            s = line.strip()
+            if not s:
+                continue
+            try:
+                obj = json.loads(s)
+            except Exception:
+                continue
+            qid = str(obj.get("query_id", "")).strip()
+            if qid:
+                qids.add(qid)
+    return qids
+
+
+def validate_queries_vs_qrels(subsets_dir: Path,
+                              qrels_train_by_split: dict,
+                              qrels_eval_by_split: dict):
+    ok = True
+    msgs = []
+    for split in SPLITS:
+
+        t_queries_path = subsets_dir / TRAIN80_DIR / (TRAIN_QUERIES_SPLIT_PATTERN.format(split))
+        if not t_queries_path.exists():
+            ok = False
+            msgs.append(f"[FAIL] Missing produced queries: {t_queries_path}")
+            t_qids = set()
+        else:
+            t_qids = read_queries_qids(t_queries_path)
+        t_qrels_qids = set(qrels_train_by_split.get(split, {}).keys())
+        if t_qids != t_qrels_qids:
+            ok = False
+            only_in_queries = sorted(list(t_qids - t_qrels_qids))[:20]
+            only_in_qrels   = sorted(list(t_qrels_qids - t_qids))[:20]
+            msgs.append(f"[FAIL] train80 queries/qrels QID mismatch for split '{split}'. "
+                        f"queries_only={len(t_qids - t_qrels_qids)}, qrels_only={len(t_qrels_qids - t_qids)}")
+            if only_in_queries:
+                msgs.append(f"       Sample QIDs only in queries: {only_in_queries}")
+            if only_in_qrels:
+                msgs.append(f"       Sample QIDs only in qrels:   {only_in_qrels}")
+        else:
+            msgs.append(f"[PASS] train80 queries and qrels have identical QID sets for split '{split}'.")
+
+
+        e_queries_path = subsets_dir / EVAL20_DIR / (EVAL_QUERIES_SPLIT_PATTERN.format(split))
+        if not e_queries_path.exists():
+            ok = False
+            msgs.append(f"[FAIL] Missing produced queries: {e_queries_path}")
+            e_qids = set()
+        else:
+            e_qids = read_queries_qids(e_queries_path)
+        e_qrels_qids = set(qrels_eval_by_split.get(split, {}).keys())
+        if e_qids != e_qrels_qids:
+            ok = False
+            only_in_queries = sorted(list(e_qids - e_qrels_qids))[:20]
+            only_in_qrels   = sorted(list(e_qrels_qids - e_qids))[:20]
+            msgs.append(f"[FAIL] eval20 queries/qrels QID mismatch for split '{split}'. "
+                        f"queries_only={len(e_qids - e_qrels_qids)}, qrels_only={len(e_qrels_qids - e_qids)}")
+            if only_in_queries:
+                msgs.append(f"       Sample QIDs only in queries: {only_in_queries}")
+            if only_in_qrels:
+                msgs.append(f"       Sample QIDs only in qrels:   {only_in_qrels}")
+        else:
+            msgs.append(f"[PASS] eval20 queries and qrels have identical QID sets for split '{split}'.")
+
+    return ok, msgs
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-root", type=str, default=DEFAULT_DATA_ROOT,
@@ -310,8 +383,10 @@ def main():
         train_gz_path,  eval_gz_path,
         corpus_gz_path
     ] + [data_root / QRELS[s] for s in SPLITS] + \
-        [subsets_dir / TRAIN_QRELS_SPLIT_PATTERN.format(s) for s in SPLITS] + \
-        [subsets_dir / EVAL_QRELS_SPLIT_PATTERN.format(s)  for s in SPLITS]
+        [subsets_dir / TRAIN80_DIR / TRAIN_QRELS_SPLIT_PATTERN.format(s) for s in SPLITS] + \
+        [subsets_dir / EVAL20_DIR  / EVAL_QRELS_SPLIT_PATTERN.format(s)  for s in SPLITS] + \
+        [subsets_dir / TRAIN80_DIR / TRAIN_QUERIES_SPLIT_PATTERN.format(s) for s in SPLITS] + \
+        [subsets_dir / EVAL20_DIR  / EVAL_QUERIES_SPLIT_PATTERN.format(s)  for s in SPLITS]
 
     missing_files = [str(p) for p in required if not p.exists()]
     if missing_files:
@@ -415,6 +490,15 @@ def main():
     )
     report.extend(msgs_mem)
     if not ok_mem:
+        ok_all = False
+
+    ok_qvqr, msgs_qvqr = validate_queries_vs_qrels(
+        subsets_dir,
+        qrels_train_by_split,
+        qrels_eval_by_split
+    )
+    report.extend(msgs_qvqr)
+    if not ok_qvqr:
         ok_all = False
 
     print("\n=== VALIDATION REPORT ===")
