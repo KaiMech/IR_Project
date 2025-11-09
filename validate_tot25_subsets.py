@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 This script validates the generated ToT-2025 subsets and their query/qrels files.
@@ -21,6 +19,7 @@ It performs the following checks:
           (per split), i.e.:
             - subsets/train80/train80-queries-{split}.jsonl  <->  subsets/train80/train80-qrels-{split}.txt
             - subsets/eval20/eval20-queries-{split}.jsonl    <->  subsets/eval20/eval20-qrels-{split}.txt
+       e) There is no QID overlap between train80 and eval20 (per split) for both qrels and queries.
 
 2) Subset corpus integrity:
    - Ensures that train100k-corpus.jsonl.gz has EXACTLY 100,000 lines and eval250k-corpus.jsonl.gz EXACTLY 250,000 lines.
@@ -243,6 +242,14 @@ def validate_qrels_coverage(data_root: Path, subsets_dir: Path):
         else:
             msgs.append(f"[PASS] All qrels docIDs match the original for split '{split}'.")
 
+        overlap_qrels = set(train_split.keys()) & set(eval_split.keys())
+        if overlap_qrels:
+            ok = False
+            msgs.append(f"[FAIL] QID overlap between train80 and eval20 qrels for split '{split}': {len(overlap_qrels)}")
+            msgs.append(f"       Sample (up to 20): {sorted(list(overlap_qrels))[:20]}")
+        else:
+            msgs.append(f"[PASS] No QID overlap between train80 and eval20 qrels for split '{split}'.")
+
     return ok, msgs, qrels_train_by_split, qrels_eval_by_split, qrels_orig
 
 
@@ -359,6 +366,14 @@ def validate_queries_vs_qrels(subsets_dir: Path,
                 msgs.append(f"       Sample QIDs only in qrels:   {only_in_qrels}")
         else:
             msgs.append(f"[PASS] eval20 queries and qrels have identical QID sets for split '{split}'.")
+
+        overlap_queries = t_qids & e_qids
+        if overlap_queries:
+            ok = False
+            msgs.append(f"[FAIL] QID overlap between train80-queries and eval20-queries for split '{split}': {len(overlap_queries)}")
+            msgs.append(f"       Sample (up to 20): {sorted(list(overlap_queries))[:20]}")
+        else:
+            msgs.append(f"[PASS] No QID overlap between train80-queries and eval20-queries for split '{split}'.")
 
     return ok, msgs
 
