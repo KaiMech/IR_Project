@@ -1,11 +1,8 @@
 # scripts/retrievers/run_retrieve_anserini.py
-# This is an example of how to create a run file for a model.
-# Here, we have done this for the first baseline model.
 from __future__ import annotations
 import argparse, os, sys
 from pathlib import Path
 
-# Make repo root importable so we can import utils_io
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

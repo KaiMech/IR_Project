@@ -17,7 +17,15 @@ run_pyterrier_train.txt
 run_retrieval_train.txt
 data/tot25/subsets/eval20/*.jsonl.gz
 data/tot25/subsets/train80/*.jsonl.gz
+dense_retrieval/lir_data/eval20/eval250k-corpus-lir.jsonl
+dense_retrieval/lir_data/train80/train100k-corpus-lir.jsonl
+bm25/bm25_anserini_output/indexes
+bm25/bm25_anserini_output/jsonl
+dense_retrieval/lir_data
+pyterrier_bm25/pyterrier_bm25_output
 # (optional) Logs & temporary files
 logs/
 .vscode
 /DPR/*.ipynb
+
+.venv/
