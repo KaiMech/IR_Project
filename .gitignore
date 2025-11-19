@@ -1,3 +1,5 @@
+*.jsonl.gz
+DPR/data/*
 trec-tot-2025-corpus.jsonl.gz
 
 stats.json
@@ -23,5 +25,7 @@ dense_retrieval/lir_data
 pyterrier_bm25/pyterrier_bm25_output
 # (optional) Logs & temporary files
 logs/
+.vscode
+/DPR/*.ipynb
 
 .venv/
