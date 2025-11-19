@@ -300,6 +300,7 @@ def main():
     ap.add_argument("--run", required=True, help="Path to the TREC run file (.txt/.run, optionally .gz)")
     ap.add_argument("--metrics", nargs="+", required=True,
                     help="e.g., ndcg@10 ndcg@1000 R@1000 P@10 rr map map@1000 f1@10 success@10")
+    ap.add_argument("--subset", choices=["auto", "train100k", "eval250k"], default="auto")
     args = ap.parse_args()
 
     ensure_pytrec_eval()
@@ -308,7 +309,7 @@ def main():
     s = str(run_p)
 
     subset_qrels = None
-    if "/runs/train100k/" in s or "train100k" in s:
+    if args.subset == "train100k":
         base = Path("/home/ciwan/tot25/IR_Project/data/tot25/subsets/train80")
         names = {
             "train": "train80-qrels-train.txt",
@@ -317,7 +318,7 @@ def main():
             "dev3":  "train80-qrels-dev3.txt",
         }
         subset_qrels = base / names[args.split]
-    elif "/runs/eval250k/" in s or "eval250k" in s:
+    elif args.subset == "eval250k":
         base = Path("/home/ciwan/tot25/IR_Project/data/tot25/subsets/eval20")
         names = {
             "train": "eval20-qrels-train.txt",
@@ -326,6 +327,25 @@ def main():
             "dev3":  "eval20-qrels-dev3.txt",
         }
         subset_qrels = base / names[args.split]
+    else:
+        if "/runs/train100k/" in s or "train100k" in s:
+            base = Path("/home/ciwan/tot25/IR_Project/data/tot25/subsets/train80")
+            names = {
+                "train": "train80-qrels-train.txt",
+                "dev1":  "train80-qrels-dev1.txt",
+                "dev2":  "train80-qrels-dev2.txt",
+                "dev3":  "train80-qrels-dev3.txt",
+            }
+            subset_qrels = base / names[args.split]
+        elif "/runs/eval250k/" in s or "eval250k" in s:
+            base = Path("/home/ciwan/tot25/IR_Project/data/tot25/subsets/eval20")
+            names = {
+                "train": "eval20-qrels-train.txt",
+                "dev1":  "eval20-qrels-dev1.txt",
+                "dev2":  "eval20-qrels-dev2.txt",
+                "dev3":  "eval20-qrels-dev3.txt",
+            }
+            subset_qrels = base / names[args.split]
 
     if subset_qrels is not None and subset_qrels.exists():
         qrel_path = subset_qrels
