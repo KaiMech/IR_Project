@@ -1,5 +1,5 @@
 *.jsonl.gz
-embeddings/data/*
+DPR/data/*
 trec-tot-2025-corpus.jsonl.gz
 
 stats.json
@@ -20,4 +20,4 @@ data/tot25/subsets/train80/*.jsonl.gz
 # (optional) Logs & temporary files
 logs/
 .vscode
-/embeddings/*.ipynb
+/DPR/*.ipynb
