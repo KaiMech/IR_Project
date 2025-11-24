@@ -1,5 +1,6 @@
 *.jsonl.gz
 DPR/data/*
+DPR/runs/*
 trec-tot-2025-corpus.jsonl.gz
 
 stats.json
