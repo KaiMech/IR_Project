@@ -349,9 +349,10 @@ def main():
     parser = argparse.ArgumentParser(description='Generate embeddings using DPR models')
     parser.add_argument(
         '--finetuned', 
-        type=bool, 
+        action='store_true', 
         default=False, 
-        help='Use a finetuned model instead of a pretrained one from HF hub'
+        help='Use a finetuned model instead of a pretrained one from HF hub. If --finetuned is present, it is interpreted as active.\
+            If you do not want to use a finetuned model, simply omit this argument.'
     )
     parser.add_argument(
         '--finetuned_model_path', 
@@ -361,14 +362,20 @@ def main():
     )
     parser.add_argument(
         '--use_query_encoder', 
-        type=bool, 
+        action='store_true', 
         default=False, 
-        help='Indicates whether the question encoder (True) or context encoder (False) is used'
+        help='Indicates whether the question encoder (True) or context encoder (False) is used. If --use_query_encoder is present,\
+            it is interpreted as True. If you want to use the context encoder, simply omit this argument.'
     )
     parser.add_argument('--corpus_path', type=str, help='Path to the jsonl file containing the corpus')
     parser.add_argument('--target_path', type=str, help='Location of the resulting embeddings')
+    parser.add_argument('--device', type=str, default=None, help='cpu or cuda')
     
     args = parser.parse_args()
+    
+    print(f'Running with args\n\tfinetunded={args.finetuned}, path={args.finetuned_model_path}\
+        \n\tmodel={'query_encoder' if args.use_query_encoder else 'context_encoder'}\
+        \n\tcorpus_path={args.corpus_path}\n\ttarget_path={args.target_path}\n\tdevice={args.device}')
     
     q_name = "facebook/dpr-question_encoder-single-nq-base"
     c_name = "facebook/dpr-ctx_encoder-single-nq-base"
@@ -417,15 +424,18 @@ def main():
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token or tokenizer.sep_token
         
-    main_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if args.device is None:
+        main_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    else:
+        main_device = torch.device(args.device)
     
-    torch.backends.cuda.matmul.allow_tf32 = True
-    torch.backends.cudnn.allow_tf32 = True
 
     model = model.to(main_device)
     model.eval()
 
     if torch.cuda.device_count() > 1:
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
         print(f"Using {torch.cuda.device_count()} GPUs with DataParallel")
         model = torch.nn.DataParallel(model, device_ids=list(range(torch.cuda.device_count())))
     else:
@@ -442,6 +452,7 @@ def main():
         STRIDE=32,
         CHUNK_BATCH=16,
         amp_dtype="fp16",
+        DEVICE=main_device,
     )
 
     
