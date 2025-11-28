@@ -15,9 +15,9 @@ are still included in the averaging, and the metric for each missing query is 0
 in the evaluator — it just indicates an *incomplete run*.
 
 Also, since your NDCG@10, NDCG@1000, and R@1000 match the published baselines
-exactly, you are effectively using the *same evaluation logic* as the baselines
+exactly, you are effectively using the same evaluation logic as the baselines
 (trec_eval/pytrec_eval style): same Qrels, average over all Qrels queries,
-missing queries → 0, DCG gains = (2^rel - 1), standard cutoffs, etc. So your
+missing queries → 0, DCG gains = (2^rel - 1), standard cutoffs, etc. So the
 pipeline is correct.
 """
 
