@@ -11,8 +11,8 @@ NOTE on the "[Warning] ... queries in qrels but not in run" message
 This warning simply means: there are query IDs in the Qrels for which your run
 file contains no results (no line at all). In TREC-style evaluation those queries
 are still included in the averaging, and the metric for each missing query is 0
-(NDCG, RR, MAP, ...). That pulls down the overall average. This is *not* a bug
-in the evaluator — it just indicates an *incomplete run*.
+(NDCG, RR, MAP, ...). That pulls down the overall average. This is not a bug
+in the evaluator — it just indicates an incomplete run.
 
 Also, since your NDCG@10, NDCG@1000, and R@1000 match the published baselines
 exactly, you are effectively using the same evaluation logic as the baselines
