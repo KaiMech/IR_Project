@@ -21,7 +21,7 @@ missing queries → 0, DCG gains = (2^rel - 1), standard cutoffs, etc. So your
 pipeline is correct.
 """
 
-# ----------------------- helpers: repo root & qrels/run I/O -----------------------
+
 def find_repo_root(start: Path | None = None) -> Path:
     p = start or Path.cwd()
     while p != p.parent:
@@ -104,7 +104,7 @@ def read_run_as_scores(path: Path) -> Dict[str, Dict[str, float]]:
 
     run_scores: Dict[str, Dict[str, float]] = {}
     for qid, rows in per_q.items():
-        rows.sort(key=lambda x: x[0])  # by rank ascending
+        rows.sort(key=lambda x: x[0])  
         seen = set()
         qmap: Dict[str, float] = {}
         for _r, pid, score in rows:
@@ -118,11 +118,11 @@ def read_run_as_scores(path: Path) -> Dict[str, Dict[str, float]]:
 # ----------------------- metric parsing -----------------------
 class MetricSpec:
     def __init__(self):
-        # pytrec_eval measure keys (dot-notation, robust); we also store the label to print
-        self.measures_pytrec: set[str] = set()   # e.g., "ndcg_cut.10", "P.10", "recall.1000"
-        self.want_labels: list[Tuple[str, str]] = []  # (label_for_output, primary_internal_key)
-        self.f1_ks: set[int] = set()            # compute from P@k & R@k
-        self.success_ks: set[int] = set()       # compute from R@k > 0
+
+        self.measures_pytrec: set[str] = set()  
+        self.want_labels: list[Tuple[str, str]] = []  
+        self.f1_ks: set[int] = set()            
+        self.success_ks: set[int] = set()      
 
 def _add_measure(spec: MetricSpec, label: str, key_primary: str):
     spec.want_labels.append((label, key_primary))
@@ -168,9 +168,9 @@ def parse_metrics(tokens: Iterable[str]) -> MetricSpec:
             _add_measure(spec, "RR", "recip_rank")
             continue
 
-        # ----- MAP / MAP@k / AP
+
         if t in {"map", "ap"}:
-            _add_measure(spec, "MAP", "map")   # AP per query, average = MAP
+            _add_measure(spec, "MAP", "map")   
             continue
         if t.startswith("map@"):
             k = int(t.split("@", 1)[1])
@@ -203,7 +203,7 @@ def parse_metrics(tokens: Iterable[str]) -> MetricSpec:
 # ----------------------- evaluation (pytrec_eval) -----------------------
 def ensure_pytrec_eval():
     try:
-        import pytrec_eval  # noqa: F401
+        import pytrec_eval 
     except Exception as e:
         raise SystemExit(
             "pytrec_eval is not installed. Please install it first:\n"
@@ -219,7 +219,7 @@ def _get_metric_value(perq: Dict[str, Dict[str, float]], qid: str, key: str) -> 
     v = perq.get(qid, {}).get(key, None)
     if v is not None:
         return v
-    # fallback: try swapping '.' <-> '_' around the cutoff
+    
     if "." in key:
         alt = key.replace(".", "_")
         return perq.get(qid, {}).get(alt, 0.0)
@@ -240,7 +240,7 @@ def evaluate_with_pytrec_eval(
         return {}
 
     evaluator = pytrec_eval.RelevanceEvaluator(qrels, measures)
-    per_query = evaluator.evaluate(run)  # dict[qid][measure] = value
+    per_query = evaluator.evaluate(run)  
     qids = list(qrels.keys())
 
     def mean_over_qids(metric_key: str) -> float:
@@ -251,14 +251,14 @@ def evaluate_with_pytrec_eval(
 
     results: Dict[str, float] = {}
 
-    # Direct metrics from pytrec_eval (in the user-requested order)
+
     for label, key in spec.want_labels:
-        # manual labels come later
+
         if label.startswith("F1@") or label.startswith("success@"):
             continue
         results[label] = mean_over_qids(key)
 
-    # ---- manual: F1@k from P@k & R@k
+
     for k in sorted(spec.f1_ks):
         Pk_key = f"P.{k}"
         Rk_key = f"recall.{k}"
@@ -270,7 +270,7 @@ def evaluate_with_pytrec_eval(
             f1_sum += f1
         results[f"F1@{k}"] = (f1_sum / len(qids)) if qids else 0.0
 
-    # ---- manual: Success@k (1 if recall@k > 0, else 0)
+
     for k in sorted(spec.success_ks):
         Rk_key = f"recall.{k}"
         s_sum = 0.0
