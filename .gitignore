@@ -1,6 +1,8 @@
 *.jsonl.gz
 DPR/data/*
+DPR/runs/*
 trec-tot-2025-corpus.jsonl.gz
+*no_commit*
 
 stats.json
 run_anserini_dev1.txt

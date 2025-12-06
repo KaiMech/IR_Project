@@ -1,0 +1,529 @@
+Logging to dpr_results_20251124_231728.log
+
+==============================
+Running embeddings=pretrained split=train subset=train100k
+Run file: DPR/runs/pretrained/train80/train.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['731', '784', '204', '838', '588']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: train
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/pretrained/train80/train.txt
+     NDCG@10 : 0.005
+   NDCG@1000 : 0.038
+      R@1000 : 0.273
+          RR : 0.004
+         MAP : 0.004
+    MAP@1000 : 0.004
+        P@10 : 0.001
+        R@10 : 0.014
+       F1@10 : 0.003
+  success@10 : 0.014
+
+==============================
+Running embeddings=pretrained split=dev1 subset=train100k
+Run file: DPR/runs/pretrained/train80/dev1.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['152', '403', '813', '1011', '898']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev1
+Queries (in qrels): 142
+Run: /home/tim/IR_Project/DPR/runs/pretrained/train80/dev1.txt
+     NDCG@10 : 0.017
+   NDCG@1000 : 0.050
+      R@1000 : 0.268
+          RR : 0.016
+         MAP : 0.016
+    MAP@1000 : 0.016
+        P@10 : 0.003
+        R@10 : 0.028
+       F1@10 : 0.005
+  success@10 : 0.028
+
+==============================
+Running embeddings=pretrained split=dev2 subset=train100k
+Run file: DPR/runs/pretrained/train80/dev2.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['528', '610', '361', '253', '820']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev2
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/pretrained/train80/dev2.txt
+     NDCG@10 : 0.006
+   NDCG@1000 : 0.044
+      R@1000 : 0.287
+          RR : 0.007
+         MAP : 0.007
+    MAP@1000 : 0.007
+        P@10 : 0.001
+        R@10 : 0.014
+       F1@10 : 0.003
+  success@10 : 0.014
+
+==============================
+Running embeddings=pretrained split=dev3 subset=train100k
+Run file: DPR/runs/pretrained/train80/dev3.txt
+==============================
+[Warning] 108 queries in qrels but not in run. Examples: ['2004', '2019', '2021', '2022', '2027']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev3
+Queries (in qrels): 536
+Run: /home/tim/IR_Project/DPR/runs/pretrained/train80/dev3.txt
+     NDCG@10 : 0.046
+   NDCG@1000 : 0.101
+      R@1000 : 0.466
+          RR : 0.039
+         MAP : 0.039
+    MAP@1000 : 0.039
+        P@10 : 0.008
+        R@10 : 0.084
+       F1@10 : 0.015
+  success@10 : 0.084
+
+==============================
+Running embeddings=pretrained split=train subset=eval250k
+Run file: DPR/runs/pretrained/eval20/train.txt
+==============================
+[Warning] 114 queries in qrels but not in run. Examples: ['763', '802', '950', '220', '792']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: train
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/pretrained/eval20/train.txt
+     NDCG@10 : 0.008
+   NDCG@1000 : 0.018
+      R@1000 : 0.105
+          RR : 0.004
+         MAP : 0.004
+    MAP@1000 : 0.004
+        P@10 : 0.002
+        R@10 : 0.021
+       F1@10 : 0.004
+  success@10 : 0.021
+
+==============================
+Running embeddings=pretrained split=dev1 subset=eval250k
+Run file: DPR/runs/pretrained/eval20/dev1.txt
+==============================
+[Warning] 113 queries in qrels but not in run. Examples: ['531', '473', '659', '1095', '1038']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev1
+Queries (in qrels): 142
+Run: /home/tim/IR_Project/DPR/runs/pretrained/eval20/dev1.txt
+     NDCG@10 : 0.004
+   NDCG@1000 : 0.016
+      R@1000 : 0.099
+          RR : 0.003
+         MAP : 0.003
+    MAP@1000 : 0.003
+        P@10 : 0.001
+        R@10 : 0.007
+       F1@10 : 0.001
+  success@10 : 0.007
+
+==============================
+Running embeddings=pretrained split=dev2 subset=eval250k
+Run file: DPR/runs/pretrained/eval20/dev2.txt
+==============================
+[Warning] 114 queries in qrels but not in run. Examples: ['519', '1006', '477', '662', '120']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev2
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/pretrained/eval20/dev2.txt
+     NDCG@10 : 0.012
+   NDCG@1000 : 0.029
+      R@1000 : 0.126
+          RR : 0.011
+         MAP : 0.011
+    MAP@1000 : 0.011
+        P@10 : 0.002
+        R@10 : 0.021
+       F1@10 : 0.004
+  success@10 : 0.021
+
+==============================
+Running embeddings=pretrained split=dev3 subset=eval250k
+Run file: DPR/runs/pretrained/eval20/dev3.txt
+==============================
+[Warning] 428 queries in qrels but not in run. Examples: ['2001', '2002', '2003', '2005', '2006']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev3
+Queries (in qrels): 536
+Run: /home/tim/IR_Project/DPR/runs/pretrained/eval20/dev3.txt
+     NDCG@10 : 0.026
+   NDCG@1000 : 0.043
+      R@1000 : 0.142
+          RR : 0.024
+         MAP : 0.024
+    MAP@1000 : 0.024
+        P@10 : 0.004
+        R@10 : 0.039
+       F1@10 : 0.007
+  success@10 : 0.039
+
+==============================
+Running embeddings=finetuned split=train subset=train100k
+Run file: DPR/runs/finetuned/train80/train.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['731', '784', '204', '838', '588']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: train
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned/train80/train.txt
+     NDCG@10 : 0.403
+   NDCG@1000 : 0.447
+      R@1000 : 0.783
+          RR : 0.366
+         MAP : 0.366
+    MAP@1000 : 0.366
+        P@10 : 0.055
+        R@10 : 0.545
+       F1@10 : 0.099
+  success@10 : 0.545
+
+==============================
+Running embeddings=finetuned split=dev1 subset=train100k
+Run file: DPR/runs/finetuned/train80/dev1.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['152', '403', '813', '1011', '898']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev1
+Queries (in qrels): 142
+Run: /home/tim/IR_Project/DPR/runs/finetuned/train80/dev1.txt
+     NDCG@10 : 0.051
+   NDCG@1000 : 0.116
+      R@1000 : 0.535
+          RR : 0.042
+         MAP : 0.042
+    MAP@1000 : 0.042
+        P@10 : 0.011
+        R@10 : 0.106
+       F1@10 : 0.019
+  success@10 : 0.106
+
+==============================
+Running embeddings=finetuned split=dev2 subset=train100k
+Run file: DPR/runs/finetuned/train80/dev2.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['528', '610', '361', '253', '820']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev2
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned/train80/dev2.txt
+     NDCG@10 : 0.043
+   NDCG@1000 : 0.115
+      R@1000 : 0.552
+          RR : 0.038
+         MAP : 0.038
+    MAP@1000 : 0.038
+        P@10 : 0.008
+        R@10 : 0.084
+       F1@10 : 0.015
+  success@10 : 0.084
+
+==============================
+Running embeddings=finetuned split=dev3 subset=train100k
+Run file: DPR/runs/finetuned/train80/dev3.txt
+==============================
+[Warning] 108 queries in qrels but not in run. Examples: ['2004', '2019', '2021', '2022', '2027']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev3
+Queries (in qrels): 536
+Run: /home/tim/IR_Project/DPR/runs/finetuned/train80/dev3.txt
+     NDCG@10 : 0.044
+   NDCG@1000 : 0.105
+      R@1000 : 0.476
+          RR : 0.040
+         MAP : 0.040
+    MAP@1000 : 0.040
+        P@10 : 0.008
+        R@10 : 0.080
+       F1@10 : 0.015
+  success@10 : 0.080
+
+==============================
+Running embeddings=finetuned split=train subset=eval250k
+Run file: DPR/runs/finetuned/eval20/train.txt
+==============================
+[Warning] 114 queries in qrels but not in run. Examples: ['763', '802', '950', '220', '792']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: train
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned/eval20/train.txt
+     NDCG@10 : 0.007
+   NDCG@1000 : 0.037
+      R@1000 : 0.189
+          RR : 0.009
+         MAP : 0.009
+    MAP@1000 : 0.009
+        P@10 : 0.001
+        R@10 : 0.014
+       F1@10 : 0.003
+  success@10 : 0.014
+
+==============================
+Running embeddings=finetuned split=dev1 subset=eval250k
+Run file: DPR/runs/finetuned/eval20/dev1.txt
+==============================
+[Warning] 113 queries in qrels but not in run. Examples: ['531', '473', '659', '1095', '1038']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev1
+Queries (in qrels): 142
+Run: /home/tim/IR_Project/DPR/runs/finetuned/eval20/dev1.txt
+     NDCG@10 : 0.027
+   NDCG@1000 : 0.047
+      R@1000 : 0.169
+          RR : 0.025
+         MAP : 0.025
+    MAP@1000 : 0.025
+        P@10 : 0.004
+        R@10 : 0.042
+       F1@10 : 0.008
+  success@10 : 0.042
+
+==============================
+Running embeddings=finetuned split=dev2 subset=eval250k
+Run file: DPR/runs/finetuned/eval20/dev2.txt
+==============================
+[Warning] 114 queries in qrels but not in run. Examples: ['519', '1006', '477', '662', '120']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev2
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned/eval20/dev2.txt
+     NDCG@10 : 0.038
+   NDCG@1000 : 0.063
+      R@1000 : 0.175
+          RR : 0.041
+         MAP : 0.041
+    MAP@1000 : 0.041
+        P@10 : 0.004
+        R@10 : 0.042
+       F1@10 : 0.008
+  success@10 : 0.042
+
+==============================
+Running embeddings=finetuned split=dev3 subset=eval250k
+Run file: DPR/runs/finetuned/eval20/dev3.txt
+==============================
+[Warning] 428 queries in qrels but not in run. Examples: ['2001', '2002', '2003', '2005', '2006']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev3
+Queries (in qrels): 536
+Run: /home/tim/IR_Project/DPR/runs/finetuned/eval20/dev3.txt
+     NDCG@10 : 0.015
+   NDCG@1000 : 0.031
+      R@1000 : 0.134
+          RR : 0.012
+         MAP : 0.012
+    MAP@1000 : 0.012
+        P@10 : 0.003
+        R@10 : 0.030
+       F1@10 : 0.005
+  success@10 : 0.030
+
+==============================
+Running embeddings=finetuned_new split=train subset=train100k
+Run file: DPR/runs/finetuned_new/train80/train.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['731', '784', '204', '838', '588']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: train
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/train80/train.txt
+     NDCG@10 : 0.145
+   NDCG@1000 : 0.230
+      R@1000 : 0.734
+          RR : 0.123
+         MAP : 0.123
+    MAP@1000 : 0.123
+        P@10 : 0.026
+        R@10 : 0.259
+       F1@10 : 0.047
+  success@10 : 0.259
+
+==============================
+Running embeddings=finetuned_new split=dev1 subset=train100k
+Run file: DPR/runs/finetuned_new/train80/dev1.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['152', '403', '813', '1011', '898']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev1
+Queries (in qrels): 142
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/train80/dev1.txt
+     NDCG@10 : 0.047
+   NDCG@1000 : 0.106
+      R@1000 : 0.458
+          RR : 0.048
+         MAP : 0.048
+    MAP@1000 : 0.048
+        P@10 : 0.006
+        R@10 : 0.063
+       F1@10 : 0.012
+  success@10 : 0.063
+
+==============================
+Running embeddings=finetuned_new split=dev2 subset=train100k
+Run file: DPR/runs/finetuned_new/train80/dev2.txt
+==============================
+[Warning] 29 queries in qrels but not in run. Examples: ['528', '610', '361', '253', '820']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev2
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/train80/dev2.txt
+     NDCG@10 : 0.049
+   NDCG@1000 : 0.101
+      R@1000 : 0.448
+          RR : 0.039
+         MAP : 0.039
+    MAP@1000 : 0.039
+        P@10 : 0.010
+        R@10 : 0.098
+       F1@10 : 0.018
+  success@10 : 0.098
+
+==============================
+Running embeddings=finetuned_new split=dev3 subset=train100k
+Run file: DPR/runs/finetuned_new/train80/dev3.txt
+==============================
+[Warning] 108 queries in qrels but not in run. Examples: ['2004', '2019', '2021', '2022', '2027']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev3
+Queries (in qrels): 536
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/train80/dev3.txt
+     NDCG@10 : 0.106
+   NDCG@1000 : 0.177
+      R@1000 : 0.634
+          RR : 0.090
+         MAP : 0.090
+    MAP@1000 : 0.090
+        P@10 : 0.018
+        R@10 : 0.183
+       F1@10 : 0.033
+  success@10 : 0.183
+
+==============================
+Running embeddings=finetuned_new split=train subset=eval250k
+Run file: DPR/runs/finetuned_new/eval20/train.txt
+==============================
+[Warning] 114 queries in qrels but not in run. Examples: ['763', '802', '950', '220', '792']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: train
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/eval20/train.txt
+     NDCG@10 : 0.009
+   NDCG@1000 : 0.034
+      R@1000 : 0.182
+          RR : 0.010
+         MAP : 0.010
+    MAP@1000 : 0.010
+        P@10 : 0.001
+        R@10 : 0.014
+       F1@10 : 0.003
+  success@10 : 0.014
+
+==============================
+Running embeddings=finetuned_new split=dev1 subset=eval250k
+Run file: DPR/runs/finetuned_new/eval20/dev1.txt
+==============================
+[Warning] 113 queries in qrels but not in run. Examples: ['531', '473', '659', '1095', '1038']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev1
+Queries (in qrels): 142
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/eval20/dev1.txt
+     NDCG@10 : 0.017
+   NDCG@1000 : 0.034
+      R@1000 : 0.155
+          RR : 0.013
+         MAP : 0.013
+    MAP@1000 : 0.013
+        P@10 : 0.004
+        R@10 : 0.035
+       F1@10 : 0.006
+  success@10 : 0.035
+
+==============================
+Running embeddings=finetuned_new split=dev2 subset=eval250k
+Run file: DPR/runs/finetuned_new/eval20/dev2.txt
+==============================
+[Warning] 114 queries in qrels but not in run. Examples: ['519', '1006', '477', '662', '120']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev2
+Queries (in qrels): 143
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/eval20/dev2.txt
+     NDCG@10 : 0.021
+   NDCG@1000 : 0.040
+      R@1000 : 0.175
+          RR : 0.016
+         MAP : 0.016
+    MAP@1000 : 0.016
+        P@10 : 0.004
+        R@10 : 0.042
+       F1@10 : 0.008
+  success@10 : 0.042
+
+==============================
+Running embeddings=finetuned_new split=dev3 subset=eval250k
+Run file: DPR/runs/finetuned_new/eval20/dev3.txt
+==============================
+[Warning] 428 queries in qrels but not in run. Examples: ['2001', '2002', '2003', '2005', '2006']
+Explanation: missing queries are scored as 0 and still averaged; this is standard TREC practice
+Since the metric values that also exist on the website match ours 1:1, they handled it the same way, and our pipeline corresponds to their evaluation method.
+
+Split: dev3
+Queries (in qrels): 536
+Run: /home/tim/IR_Project/DPR/runs/finetuned_new/eval20/dev3.txt
+     NDCG@10 : 0.035
+   NDCG@1000 : 0.054
+      R@1000 : 0.174
+          RR : 0.031
+         MAP : 0.031
+    MAP@1000 : 0.031
+        P@10 : 0.005
+        R@10 : 0.054
+       F1@10 : 0.010
+  success@10 : 0.054
