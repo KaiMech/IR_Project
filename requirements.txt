@@ -3,7 +3,7 @@ transformers
 numpy
 tqdm
 rank-bm25
-pytrec eval
+pytrec_eval
 pyserini
 pyterrier
 transformers
