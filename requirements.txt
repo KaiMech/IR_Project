@@ -9,3 +9,7 @@ pyterrier
 transformers
 click
 pandas
+nltk==3.9.1
+numpy==1.26.4
+orjson==3.10.15
+pandas==2.2.3
