@@ -1,3 +1,6 @@
+# DPR: Generate Embeddings and Evaluate
+Details can be found in the separate README file in the subdirectory <b>DPR</b>
+
 # DPR Fine-Tuning Guide
 
 This repository contains scripts for fine-tuning a Dense Passage Retrieval (DPR) model. 

@@ -1,27 +1,38 @@
+# Generate embeddings using DPR models
+# Author: Tim Karges, Matriculation number: 1827406
 from __future__ import annotations
-import os
 import json
 from pathlib import Path
 import torch
 import numpy as np
 from transformers import DPRContextEncoder, DPRQuestionEncoder, DPRContextEncoderTokenizer, DPRQuestionEncoderTokenizer, AutoConfig
 from contextlib import nullcontext
-import math
 from tqdm.auto import tqdm
-from multiprocessing import Process, Queue, cpu_count
-from threading import Thread
-import queue
 import sys
 import argparse
 import safetensors.torch
 
-def iter_corpus(corpus_path):
+def iter_corpus_query(corpus_path):
+    """
+    Iterate over a JSONL query file and yield (id, text).
+    """
     with open(corpus_path, 'r', encoding='utf-8') as f:
         for line in f:
             if not line.strip():
                 continue
             obj = json.loads(line)
             yield str(obj['query_id']), obj.get('query', '')
+
+def iter_corpus_ctx(corpus_path):
+    """
+    Iterate over a JSONL corpus file and yield (id, text).
+    """
+    with open(corpus_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.strip():
+                continue
+            obj = json.loads(line)
+            yield str(obj['id']), obj.get('text', '')
 
 def _tokenize_for_encoder(
     texts,
@@ -32,36 +43,29 @@ def _tokenize_for_encoder(
     exclude_special_in_weight=True,
 ):
     """
-    Tokenize a batch of texts for DPR-style encoders.
-
-    - Uses slow DPR tokenizer with overflow.
-    - Does NOT rely on return_tensors='pt' inside HF to avoid the
-      'overflowing tokens of different lengths' error.
-    - Pads everything to fixed MAX_LEN.
+    Tokenize a batch of texts for DPR models.
     """
-    # Let HF do truncation + overflow, but NOT tensor conversion / padding
     toks = tokenizer(
         texts,
         truncation=True,
-        padding=False,                 # raw lists
+        padding=False,
         max_length=MAX_LEN,
         stride=STRIDE,
         return_overflowing_tokens=True,
         return_attention_mask=True,
         return_length=True,
         return_special_tokens_mask=exclude_special_in_weight,
-        return_tensors=None,           # critical: avoid ragged → tensor inside HF
+        return_tensors=None,
     )
 
-    input_ids_list = toks["input_ids"]          # list[list[int]]
-    attn_mask_list = toks["attention_mask"]     # list[list[int]]
+    input_ids_list = toks["input_ids"]
+    attn_mask_list = toks["attention_mask"]
     stm_list       = toks.get("special_tokens_mask", None)
 
-    # Fixed length for this model; keeps things simple and regular
     seq_len = MAX_LEN
     pad_id = tokenizer.pad_token_id
     if pad_id is None:
-        pad_id = 0  # DPR/BERT vocab: 0 is usually [PAD]
+        pad_id = 0
 
     def pad(seq, pad_value):
         if len(seq) >= seq_len:
@@ -72,7 +76,6 @@ def _tokenize_for_encoder(
     padded_attn_mask = [pad(mask, 0) for mask in attn_mask_list]
 
     if stm_list is not None:
-        # Mark padding as "special" (1), consistent with HF behavior
         padded_stm = [pad(stm, 1) for stm in stm_list]
     else:
         padded_stm = None
@@ -86,11 +89,10 @@ def _tokenize_for_encoder(
     tokenized = {
         "input_ids": as_tensor(padded_input_ids, torch.long),
         "attention_mask": as_tensor(padded_attn_mask, torch.long),
-        "length": as_tensor(toks.get("length"), torch.long),  # original valid length
+        "length": as_tensor(toks.get("length"), torch.long),
         "special_tokens_mask": as_tensor(padded_stm, torch.long) if padded_stm is not None else None,
     }
 
-    # overflow_to_sample_mapping tells you which chunk came from which original text
     if "overflow_to_sample_mapping" in toks:
         doc_map = as_tensor(toks.pop("overflow_to_sample_mapping"), torch.long)
     else:
@@ -100,7 +102,7 @@ def _tokenize_for_encoder(
 
 
 @torch.inference_mode()
-def encode_doc_batch_fast(
+def encode_doc_batch(
     tokenized,
     doc_map_cpu,
     model,
@@ -112,6 +114,29 @@ def encode_doc_batch_fast(
     ACCUM_ON_CPU=False,
     amp_dtype="fp16",
 ):
+    """
+    Encode tokenized documents into embeddings, efficiently.
+
+    Arguments:
+        tokenized: dict from _tokenize_for_encoder()
+        doc_map_cpu: 1D tensor mapping chunk index → original doc index
+        model: DPR encoder (question or context)
+        CHUNK_BATCH: micro-batch size for GPU
+        DEVICE: torch.device (e.g. cuda:0 or cpu)
+        pooling:
+            - "auto"/"cls": use pooler_output or [CLS] token as embedding
+            - else: fall back to mean pooling
+        weight_by_tokens:
+            - If True, chunks are weighted by number of valid tokens when
+              aggregating multiple chunks into a single doc embedding.
+        ACCUM_ON_CPU:
+            - If True, keep intermediate sums on CPU to reduce GPU memory.
+        amp_dtype:
+            - "fp16" / "bf16": use AMP on CUDA for faster inference.
+
+    Returns:
+        np.ndarray of shape [num_docs, hidden_dim], L2-normalized.
+    """
     input_ids = tokenized["input_ids"]
     attention_mask = tokenized["attention_mask"]
 
@@ -127,7 +152,6 @@ def encode_doc_batch_fast(
         )
         return np.zeros((0, hidden), dtype=np.float32)
 
-    # per-chunk token counts / weights (CPU)
     if tokenized.get("length") is not None:
         valid_tokens_cpu = tokenized["length"].view(-1, 1)
     else:
@@ -167,7 +191,6 @@ def encode_doc_batch_fast(
         else nullcontext()
     )
 
-    # microbatches for GPU
     for s in range(0, num_chunks, CHUNK_BATCH):
         e = min(s + CHUNK_BATCH, num_chunks)
 
@@ -191,7 +214,7 @@ def encode_doc_batch_fast(
                 last = out.last_hidden_state
                 summed = (last * attn_s.unsqueeze(-1)).sum(dim=1)
                 denom  = attn_s.sum(dim=1, keepdim=True).clamp_min(1)
-                vecs   = summed / denom  # mean pooling
+                vecs   = summed / denom
 
             vecs = vecs.to(torch.float32)
 
@@ -220,9 +243,6 @@ def encode_doc_batch_fast(
 
 
 def _batch_iter_corpus(corpus_path, iter_corpus, batch_size):
-    """
-    Group (doc_id, text) from iter_corpus() into batches.
-    """
     buf_ids, buf_texts = [], []
     for doc_id, text in iter_corpus(corpus_path):
         buf_ids.append(str(doc_id))
@@ -234,10 +254,10 @@ def _batch_iter_corpus(corpus_path, iter_corpus, batch_size):
         yield buf_ids, buf_texts
 
 
-def build_embeddings_fast(
+def build_embeddings(
     *,
     corpus_path,
-    iter_corpus,                # callable or generator yielding (doc_id, text)
+    iter_corpus,
     tokenizer,
     model,
     OUTDIR: Path,
@@ -250,19 +270,11 @@ def build_embeddings_fast(
     exclude_special_in_weight=True,
     DEVICE=torch.device("cuda"),
 ):
-    """
-    Build DPR-style passage embeddings in shards, in a straightforward,
-    synchronous pipeline (no threads / queues).
-
-    Guarantees:
-    - Each row in emb_XXXXX.npy lines up 1:1 with each line in emb_XXXXX.txt.
-    """
-
     OUTDIR.mkdir(parents=True, exist_ok=True)
 
     shard_idx = 0
-    buffer_blocks = []  # list of np.ndarray [N_batch, dim]
-    buffer_ids    = []  # list of str
+    buffer_blocks = []
+    buffer_ids    = []
 
     def flush_to_disk():
         nonlocal shard_idx, buffer_blocks, buffer_ids
@@ -295,9 +307,7 @@ def build_embeddings_fast(
         disable=False,
     )
 
-    # loop over batches of raw docs
     for ids_batch, texts_batch in _batch_iter_corpus(corpus_path, iter_corpus, DOCS_PER_CALL):
-        # tokenization (with overflow)
         toks, doc_map = _tokenize_for_encoder(
             texts_batch,
             tokenizer,
@@ -306,8 +316,7 @@ def build_embeddings_fast(
             exclude_special_in_weight=exclude_special_in_weight,
         )
 
-        # encode; returns one embedding per *original* doc (using doc_map)
-        V = encode_doc_batch_fast(
+        V = encode_doc_batch(
             tokenized=toks,
             doc_map_cpu=doc_map,
             model=model,
@@ -322,15 +331,6 @@ def build_embeddings_fast(
             V = V[None, :]
         if V.shape[0] == 0:
             continue
-
-        # We expect exactly one embedding per original document
-        if len(ids_batch) != V.shape[0]:
-            raise RuntimeError(
-                "Embedding/doc_id misalignment detected.\n"
-                f"- len(ids_batch) = {len(ids_batch)}\n"
-                f"- V.shape[0]     = {V.shape[0]}\n"
-                f"- doc_map may not have been reduced to 1 embedding per doc."
-            )
 
         buffer_blocks.append(V.astype(np.float32, copy=False))
         buffer_ids.extend(ids_batch)
@@ -441,16 +441,16 @@ def main():
     else:
         print("Single GPU / CPU mode")
         
-    build_embeddings_fast(
+    build_embeddings(
         corpus_path=CORPUS_JSONL,
-        iter_corpus=iter_corpus,
+        iter_corpus=iter_corpus_ctx if args.use_query_encoder else iter_corpus_query,
         tokenizer=tokenizer,
         model=model,
         OUTDIR=OUTDIR,
-        DOCS_PER_CALL=16,
-        MAX_LEN=256,
-        STRIDE=32,
-        CHUNK_BATCH=16,
+        DOCS_PER_CALL=32,
+        MAX_LEN=512,
+        STRIDE=64,
+        CHUNK_BATCH=32,
         amp_dtype="fp16",
         DEVICE=main_device,
     )

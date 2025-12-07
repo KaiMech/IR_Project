@@ -1,3 +1,5 @@
+# Evaluate embeddings and generate runfiles
+# Author: Tim Karges, Matriculation number: 1827406
 from pathlib import Path
 import re
 import numpy as np
@@ -25,7 +27,6 @@ def load_shard(shards, shard_id: str):
     ctx_ids = []
     for chunk in shards[shard_id]:
         ctx_embs.append(np.load(chunk[0]))
-        # ctx_ids.append(np.array(chunk[1].read_text().splitlines()))
         ctx_ids.append(np.loadtxt(chunk[1], dtype=np.int64))
     return np.concatenate(ctx_embs, axis=0), np.concatenate(ctx_ids, axis=0)
 
@@ -40,7 +41,6 @@ def load_query_embeddings(root: Path):
     query_ids = []
     for chunk in pairs:
         query_embs.append(np.load(chunk[0]))
-        # query_ids.append(np.array(chunk[1].read_text().splitlines()))
         query_ids.append(np.loadtxt(chunk[1], dtype=np.int64))
     return np.concatenate(query_embs, axis=0), np.concatenate(query_ids, axis=0)
 
@@ -80,9 +80,7 @@ def write_trec_run(query_ids, doc_ids_topk, scores_topk, run_tag, outfile_path):
             for rank in range(K):
                 doc_id = doc_ids_topk[qi, rank]
                 score  = scores_topk[qi, rank]
-
-                # skip empty/uninitialized slots if you have them
-                # e.g. if score == -inf or doc_id == -1
+                
                 if score == -np.inf or doc_id == -1:
                     continue
 
