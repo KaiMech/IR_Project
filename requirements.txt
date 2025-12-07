@@ -3,3 +3,16 @@ transformers
 numpy
 tqdm
 rank-bm25
+
+# Additional system requirements for reproducing chapter 3 in the report
+#(subsampled corpus construction, evaluation pipeline, baseline models):
+Python 3.9 or higher
+• Java JDK 17 or 21 (required by Pyserini/Anserini and PyTerrier)
+• Python packages :
+– pytrec eval
+– pyserini
+– pyterrier
+– transformers
+– torch
+– click
+– pandas
